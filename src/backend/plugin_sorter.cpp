@@ -26,6 +26,7 @@
 #include "error.h"
 #include "plugin_sorter.h"
 #include "helpers/helpers.h"
+#include "helpers/json.h"
 
 #include <cstdlib>
 
@@ -96,6 +97,45 @@ namespace loot {
         vertex_t target;
     };
 
+    void writeAsJson(const PluginGraph& graph) {
+        // Write out to a simple JSON file.
+        YAML::Node node;
+
+        vector<string> pluginNames;
+        for (const auto& vertex : boost::make_iterator_range(boost::vertices(graph))) {
+            if (graph[vertex].Name().empty())
+                continue;
+
+            YAML::Node vertexNode;
+            vertexNode["index"] = pluginNames.size();
+            vertexNode["name"] = graph[vertex].Name();
+
+            node["vertices"].push_back(vertexNode);
+            pluginNames.push_back(graph[vertex].Name());
+        }
+
+        auto getIndex = [&](const std::string& pluginName) {
+            return std::distance(begin(pluginNames), find(begin(pluginNames), end(pluginNames), pluginName));
+        };
+
+        for (const auto& edge : boost::make_iterator_range(boost::edges(graph))) {
+            YAML::Node edgeNode;
+
+            edgeNode["type"] = static_cast<int>(graph[edge].getSource());
+            edgeNode["source"] = getIndex(graph[boost::source(edge, graph)].Name());
+            edgeNode["target"] = getIndex(graph[boost::target(edge, graph)].Name());
+
+            node["edges"].push_back(edgeNode);
+        }
+
+        boost::filesystem::ofstream out(boost::filesystem::current_path() / "graph.dot.js");
+
+        // Write out JavaScript
+        out << "var dot = " << JSON::stringify(node) << ';';
+
+        out.close();
+    }
+
     std::list<Plugin> PluginSorter::Sort(Game& game, const unsigned int language) {
         // Clear existing data.
         graph.clear();
@@ -131,6 +171,8 @@ namespace loot {
 
         BOOST_LOG_TRIVIAL(debug) << "Adding overlap edges.";
         AddOverlapEdges();
+
+        writeAsJson(graph);
 
         BOOST_LOG_TRIVIAL(debug) << "Adding tie-break edges.";
         AddTieBreakEdges();
@@ -308,11 +350,12 @@ namespace loot {
         }
     }
 
-    void PluginSorter::addEdge(const vertex_t& fromVertex, const vertex_t& toVertex) {
+    void PluginSorter::addEdge(const vertex_t& fromVertex, const vertex_t& toVertex, Edge::Source source) {
         if (!boost::edge(fromVertex, toVertex, graph).second) {
             BOOST_LOG_TRIVIAL(trace) << "Adding edge from \"" << graph[fromVertex].Name() << "\" to \"" << graph[toVertex].Name() << "\".";
 
-            boost::add_edge(fromVertex, toVertex, graph);
+            auto result = boost::add_edge(fromVertex, toVertex, graph);
+            graph[result.first].setSource(source);
         }
     }
 
@@ -337,26 +380,26 @@ namespace loot {
                     vertex = *vit2;
                 }
 
-                addEdge(parentVertex, vertex);
+                addEdge(parentVertex, vertex, Edge::Source::MASTER_FILE);
             }
 
             vertex_t parentVertex;
             BOOST_LOG_TRIVIAL(trace) << "Adding in-edges for masters.";
             for (const auto &master : graph[*vit].getMasters()) {
                 if (GetVertexByName(master, parentVertex))
-                    addEdge(parentVertex, *vit);
+                    addEdge(parentVertex, *vit, Edge::Source::PLUGIN_MASTER);
             }
 
             BOOST_LOG_TRIVIAL(trace) << "Adding in-edges for requirements.";
             for (const auto &file : graph[*vit].Reqs()) {
                 if (GetVertexByName(file.Name(), parentVertex))
-                    addEdge(parentVertex, *vit);
+                    addEdge(parentVertex, *vit, Edge::Source::REQUIREMENT);
             }
 
             BOOST_LOG_TRIVIAL(trace) << "Adding in-edges for 'load after's.";
             for (const auto &file : graph[*vit].LoadAfter()) {
                 if (GetVertexByName(file.Name(), parentVertex))
-                    addEdge(parentVertex, *vit);
+                    addEdge(parentVertex, *vit, Edge::Source::LOAD_AFTER);
             }
         }
     }
@@ -391,7 +434,7 @@ namespace loot {
                 }
 
                 if (!EdgeCreatesCycle(fromVertex, toVertex))
-                    addEdge(fromVertex, toVertex);
+                    addEdge(fromVertex, toVertex, Edge::Source::PRIORITY);
             }
         }
     }
@@ -425,7 +468,7 @@ namespace loot {
                 }
 
                 if (!EdgeCreatesCycle(fromVertex, toVertex))
-                    addEdge(fromVertex, toVertex);
+                    addEdge(fromVertex, toVertex, Edge::Source::OVERLAP);
             }
         }
     }
@@ -492,7 +535,7 @@ namespace loot {
                 }
 
                 if (!EdgeCreatesCycle(fromVertex, toVertex))
-                    addEdge(fromVertex, toVertex);
+                    addEdge(fromVertex, toVertex, Edge::Source::TIE_BREAK);
             }
         }
     }

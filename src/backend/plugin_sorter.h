@@ -33,7 +33,31 @@
 #include <boost/graph/adjacency_list.hpp>
 
 namespace loot {
-    typedef boost::adjacency_list<boost::listS, boost::listS, boost::directedS, Plugin> PluginGraph;
+    class Edge {
+    public:
+        enum class Source {
+            MASTER_FILE,
+            PLUGIN_MASTER,
+            REQUIREMENT,
+            LOAD_AFTER,
+            PRIORITY,
+            OVERLAP,
+            TIE_BREAK,
+        };
+
+        Source getSource() const {
+            return source;
+        }
+
+        void setSource(Source source) {
+            this->source = source;
+        }
+
+    private:
+        Source source;
+    };
+
+    typedef boost::adjacency_list<boost::listS, boost::listS, boost::directedS, Plugin, Edge> PluginGraph;
     typedef boost::graph_traits<PluginGraph>::vertex_descriptor vertex_t;
     typedef boost::associative_property_map<std::map<vertex_t, size_t>> vertex_map_t;
 
@@ -63,7 +87,7 @@ namespace loot {
         void AddOverlapEdges();
         void AddTieBreakEdges();
 
-        void addEdge(const vertex_t& fromVertex, const vertex_t& toVertex);
+        void addEdge(const vertex_t& fromVertex, const vertex_t& toVertex, Edge::Source source);
     };
 }
 

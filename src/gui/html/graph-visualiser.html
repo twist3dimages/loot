@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<head>
+  <title>Plugin Graph Visualiser</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.15.1/vis.min.css" />
+  <style>
+    html, body, #network {
+      height: 100vh;
+      width: 100vw;
+      margin: 0;
+    }
+    #legend {
+      position: absolute;
+      margin: 5px;
+    }
+  </style>
+</head>
+<body>
+  <p id="legend"></p>
+  <div id="network"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.15.1/vis.min.js"></script>
+  <script src="graph.dot.js"></script>
+  <script>
+    'use strict';
+    const sourceColors = [
+      { source: 'master flag', color: '#d95f02' },
+      { source: 'plugin master', color: '#1b9e77' },
+      { source: 'requirement', color: '#7570b3' },
+      { source: 'load after', color: '#e7298a' },
+      { source: 'priority', color: '#66a61e' },
+      { source: 'overlap', color: '#e6ab02' },
+    ];
+    function writeLegend() {
+      const legend = document.getElementById('legend');
+
+      for (let i = 0; i < sourceColors.length; ++i) {
+        const span = document.createElement('span');
+        span.style.color = sourceColors[i].color;
+        span.textContent = `${sourceColors[i].source}  `;
+
+        legend.appendChild(span);
+      }
+    }
+
+    function generateVisGraph() {
+      const data = {
+        nodes: new vis.DataSet(dot.vertices.map((vertex) => {
+          return {
+            id: vertex.index,
+            label: vertex.name,
+          };
+        })),
+        edges: new vis.DataSet(dot.edges.map((edge) => {
+          return {
+            from: edge.source,
+            to: edge.target,
+            color: sourceColors[edge.type].color,
+          };
+        })),
+      };
+
+      const options = {
+        nodes: {
+          borderWidth: 1,
+          color: {
+            background: 'white',
+            border: '#ccc',
+          },
+          shape: 'box',
+        },
+        edges: {
+          arrows: 'to',
+          arrowStrikethrough: false,
+        },
+        physics: {
+          barnesHut: {
+            gravitationalConstant: -50000,
+          },
+          solver: 'forceAtlas2Based',
+        },
+      };
+
+      const container = document.getElementById('network');
+      const network = new vis.Network(container, data, options);
+    }
+
+    writeLegend();
+    generateVisGraph();
+  </script>
+</body>
