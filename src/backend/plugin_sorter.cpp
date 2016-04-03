@@ -377,15 +377,26 @@ namespace loot {
         }
     }
 
-    void PluginSorter::AddSpecificEdges() {
-        //Add edges for all relationships that aren't overlaps or priority differences.
-        vertex_it vit, vitend;
-        for (tie(vit, vitend) = boost::vertices(graph); vit != vitend; ++vit) {
-            BOOST_LOG_TRIVIAL(trace) << "Adding specific edges to vertex for \"" << graph[*vit].Name() << "\".";
+    bool PluginSorter::hasAdjacentMasterFile(const vertex_t& vertex) const {
+        for (const auto& adjacentVertex : boost::make_iterator_range(boost::adjacent_vertices(vertex, graph))) {
+            if (graph[adjacentVertex].isMasterFile())
+                return true;
+        }
 
+        return false;
+    }
+
+    void PluginSorter::addMasterFlagEdges() {
+        loot::vertex_it vit, vitend;
+        for (boost::tie(vit, vitend) = boost::vertices(graph); vit != vitend; ++vit) {
             BOOST_LOG_TRIVIAL(trace) << "Adding edges for master flag differences.";
+
+            // Skip any master file that has an edge to another master file.
+            if (hasAdjacentMasterFile(*vit))
+                continue;
+
             for (vertex_it vit2 = vit; vit2 != vitend; ++vit2) {
-                if (graph[*vit].isMasterFile() == graph[*vit2].isMasterFile())
+                if (graph[*vit].isMasterFile() == graph[*vit2].isMasterFile() || hasAdjacentMasterFile(*vit2))
                     continue;
 
                 vertex_t vertex, parentVertex;
@@ -400,25 +411,54 @@ namespace loot {
 
                 addEdge(parentVertex, vertex, Edge::Source::MASTER_FILE);
             }
+        }
+    }
 
-            vertex_t parentVertex;
-            BOOST_LOG_TRIVIAL(trace) << "Adding in-edges for masters.";
-            for (const auto &master : graph[*vit].getMasters()) {
-                if (GetVertexByName(master, parentVertex))
-                    addEdge(parentVertex, *vit, Edge::Source::PLUGIN_MASTER);
-            }
+    void PluginSorter::addMasterEdgesToVertex(const vertex_t& vertex) {
+        BOOST_LOG_TRIVIAL(trace) << "Adding in-edges for masters for " << graph[vertex].Name();
+        vertex_t parentVertex;
+        for (const auto &master : graph[vertex].getMasters()) {
+            if (GetVertexByName(master, parentVertex))
+                addEdge(parentVertex, vertex, Edge::Source::PLUGIN_MASTER);
+        }
+    }
 
-            BOOST_LOG_TRIVIAL(trace) << "Adding in-edges for requirements.";
-            for (const auto &file : graph[*vit].Reqs()) {
-                if (GetVertexByName(file.Name(), parentVertex))
-                    addEdge(parentVertex, *vit, Edge::Source::REQUIREMENT);
-            }
+    void PluginSorter::addRequirementEdgesToVertex(const vertex_t& vertex) {
+        BOOST_LOG_TRIVIAL(trace) << "Adding in-edges for requirements for " << graph[vertex].Name();
+        vertex_t parentVertex;
+        for (const auto& file : graph[vertex].Reqs()) {
+            if (GetVertexByName(file.Name(), parentVertex))
+                addEdge(parentVertex, vertex, Edge::Source::REQUIREMENT);
+        }
+    }
 
-            BOOST_LOG_TRIVIAL(trace) << "Adding in-edges for 'load after's.";
-            for (const auto &file : graph[*vit].LoadAfter()) {
-                if (GetVertexByName(file.Name(), parentVertex))
-                    addEdge(parentVertex, *vit, Edge::Source::LOAD_AFTER);
-            }
+    void PluginSorter::addLoadAfterEdgesToVertex(const vertex_t& vertex) {
+        BOOST_LOG_TRIVIAL(trace) << "Adding in-edges for 'load after's for " << graph[vertex].Name();
+        vertex_t parentVertex;
+        for (const auto& file : graph[vertex].LoadAfter()) {
+            if (GetVertexByName(file.Name(), parentVertex))
+                addEdge(parentVertex, vertex, Edge::Source::LOAD_AFTER);
+        }
+    }
+
+    void PluginSorter::AddSpecificEdges() {
+        //Add edges for all relationships that aren't overlaps or priority differences.
+
+        for (const auto& vertex : boost::make_iterator_range(boost::vertices(graph))) {
+            BOOST_LOG_TRIVIAL(trace) << "Adding specific edges to vertex for \"" << graph[vertex].Name() << "\".";
+            if (graph[vertex].isMasterFile())
+                addMasterEdgesToVertex(vertex);
+
+            addRequirementEdgesToVertex(vertex);
+            addLoadAfterEdgesToVertex(vertex);
+        }
+
+        addMasterFlagEdges();
+
+        for (const auto& vertex : boost::make_iterator_range(boost::vertices(graph))) {
+            BOOST_LOG_TRIVIAL(trace) << "Adding specific edges to vertex for \"" << graph[vertex].Name() << "\".";
+            if (!graph[vertex].isMasterFile())
+                addMasterEdgesToVertex(vertex);
         }
     }
 

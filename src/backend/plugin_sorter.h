@@ -88,8 +88,13 @@ namespace loot {
         void AddTieBreakEdges();
 
         void addEdge(const vertex_t& fromVertex, const vertex_t& toVertex, Edge::Source source);
+        void addMasterEdgesToVertex(const vertex_t& vertex);
+        void addRequirementEdgesToVertex(const vertex_t& vertex);
+        void addLoadAfterEdgesToVertex(const vertex_t& vertex);
+
         bool pathExists(const vertex_t& fromVertex, const vertex_t& toVertex) const;
         bool pathExistsInEitherDirection(const vertex_t& u, const vertex_t& v) const;
+        bool hasAdjacentMasterFile(const vertex_t& vertex) const;
     };
 }
 
