@@ -442,12 +442,55 @@ namespace loot {
             addLoadAfterEdgesToVertex(vertex);
         }
 
+        PropagatePriorities();
+        addPriorityEdgesBetweenMasters();
         addMasterFlagEdges();
 
         for (const auto& vertex : boost::make_iterator_range(boost::vertices(graph))) {
             BOOST_LOG_TRIVIAL(trace) << "Adding specific edges to vertex for \"" << graph[vertex].Name() << "\".";
             if (!graph[vertex].isMasterFile())
                 addMasterEdgesToVertex(vertex);
+        }
+    }
+
+    void PluginSorter::addPriorityEdgesBetweenMasters() {
+        for (const auto& vertex : boost::make_iterator_range(boost::vertices(graph))) {
+            BOOST_LOG_TRIVIAL(trace) << "Adding priority difference edges to vertex for \"" << graph[vertex].Name() << "\".";
+            // If the plugin does not have a global priority and doesn't load
+            // an archive and has no override records, skip it. Plugins without
+            // override records can only conflict with plugins that override
+            // the records they add, so any edge necessary will be added when
+            // evaluating that plugin.
+            if (!graph[vertex].isMasterFile() ||
+                !graph[vertex].IsPriorityGlobal() && graph[vertex].NumOverrideFormIDs() == 0 && !graph[vertex].LoadsArchive())
+                continue;
+
+            for (const auto& otherVertex : boost::make_iterator_range(boost::vertices(graph))) {
+                // If the plugins have equal priority, or have non-global
+                // priorities but don't conflict, don't add a priority edge.
+                if (!graph[otherVertex].isMasterFile() ||
+                    graph[vertex].Priority() == graph[otherVertex].Priority() ||
+                    !graph[vertex].IsPriorityGlobal() && !graph[otherVertex].IsPriorityGlobal() && !graph[vertex].DoFormIDsOverlap(graph[otherVertex])) {
+                    continue;
+                }
+
+                vertex_t fromVertex, toVertex;
+                if (graph[vertex].Priority() < graph[otherVertex].Priority()) {
+                    fromVertex = vertex;
+                    toVertex = otherVertex;
+                }
+                else {
+                    fromVertex = otherVertex;
+                    toVertex = vertex;
+                }
+
+                if (!pathExistsInEitherDirection(fromVertex, toVertex)) {  //No edge going the other way, OK to add this edge.
+                    BOOST_LOG_TRIVIAL(trace) << "Adding edge from \"" << graph[fromVertex].Name() << "\" to \"" << graph[toVertex].Name() << "\".";
+
+                    auto result = boost::add_edge(fromVertex, toVertex, graph);
+                    graph[result.first].setSource(Edge::Source::PRIORITY);
+                }
+            }
         }
     }
 

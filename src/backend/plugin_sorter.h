@@ -83,6 +83,7 @@ namespace loot {
         void addPluginVertices(Game& game, const unsigned int language);
         void addMasterFlagEdges();
         void AddSpecificEdges();
+        void addPriorityEdgesBetweenMasters();
         void AddPriorityEdges();
         void AddOverlapEdges();
         void AddTieBreakEdges();
