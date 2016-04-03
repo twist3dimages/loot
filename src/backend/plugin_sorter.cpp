@@ -284,9 +284,27 @@ namespace loot {
         boost::depth_first_search(graph, visitor(CycleDetector()).vertex_index_map(vertexIndexMap));
     }
 
-    bool PluginSorter::EdgeCreatesCycle(const vertex_t& fromVertex, const vertex_t& toVertex) const {
+    bool PluginSorter::pathExists(const vertex_t& fromVertex, const vertex_t& toVertex) const {
+        if (boost::edge(fromVertex, toVertex, graph).second)
+            return true;
+
         try {
-            boost::breadth_first_search(graph, toVertex, visitor(PathDetector(fromVertex)).vertex_index_map(vertexIndexMap));
+            boost::breadth_first_search(graph, fromVertex, visitor(PathDetector(toVertex)).vertex_index_map(vertexIndexMap));
+        }
+        catch (error& e) {
+            if (e.code() == error::ok)
+                return true;
+        }
+        return false;
+    }
+
+    bool PluginSorter::pathExistsInEitherDirection(const vertex_t& u, const vertex_t& v) const {
+        if (boost::edge(u, v, graph).second || boost::edge(v, u, graph).second)
+            return true;
+
+        try {
+            boost::breadth_first_search(graph, v, visitor(PathDetector(u)).vertex_index_map(vertexIndexMap));
+            boost::breadth_first_search(graph, u, visitor(PathDetector(v)).vertex_index_map(vertexIndexMap));
         }
         catch (error& e) {
             if (e.code() == error::ok)
@@ -351,7 +369,7 @@ namespace loot {
     }
 
     void PluginSorter::addEdge(const vertex_t& fromVertex, const vertex_t& toVertex, Edge::Source source) {
-        if (!boost::edge(fromVertex, toVertex, graph).second) {
+        if (!pathExists(fromVertex, toVertex)) {
             BOOST_LOG_TRIVIAL(trace) << "Adding edge from \"" << graph[fromVertex].Name() << "\" to \"" << graph[toVertex].Name() << "\".";
 
             auto result = boost::add_edge(fromVertex, toVertex, graph);
@@ -433,7 +451,7 @@ namespace loot {
                     toVertex = vertex;
                 }
 
-                if (!EdgeCreatesCycle(fromVertex, toVertex))
+                if (!pathExistsInEitherDirection(fromVertex, toVertex))
                     addEdge(fromVertex, toVertex, Edge::Source::PRIORITY);
             }
         }
@@ -467,7 +485,7 @@ namespace loot {
                     toVertex = vertex;
                 }
 
-                if (!EdgeCreatesCycle(fromVertex, toVertex))
+                if (!pathExistsInEitherDirection(fromVertex, toVertex))
                     addEdge(fromVertex, toVertex, Edge::Source::OVERLAP);
             }
         }
@@ -534,7 +552,7 @@ namespace loot {
                     toVertex = vertex;
                 }
 
-                if (!EdgeCreatesCycle(fromVertex, toVertex))
+                if (!pathExistsInEitherDirection(fromVertex, toVertex))
                     addEdge(fromVertex, toVertex, Edge::Source::TIE_BREAK);
             }
         }

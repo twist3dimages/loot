@@ -88,6 +88,8 @@ namespace loot {
         void AddTieBreakEdges();
 
         void addEdge(const vertex_t& fromVertex, const vertex_t& toVertex, Edge::Source source);
+        bool pathExists(const vertex_t& fromVertex, const vertex_t& toVertex) const;
+        bool pathExistsInEitherDirection(const vertex_t& u, const vertex_t& v) const;
     };
 }
 
