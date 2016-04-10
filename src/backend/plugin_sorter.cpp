@@ -387,29 +387,18 @@ namespace loot {
     }
 
     void PluginSorter::addMasterFlagEdges() {
-        loot::vertex_it vit, vitend;
-        for (boost::tie(vit, vitend) = boost::vertices(graph); vit != vitend; ++vit) {
+        for (const auto& vertex : boost::make_iterator_range(boost::vertices(graph))) {
             BOOST_LOG_TRIVIAL(trace) << "Adding edges for master flag differences.";
 
             // Skip any master file that has an edge to another master file.
-            if (hasAdjacentMasterFile(*vit))
+            if (!graph[vertex].isMasterFile() || hasAdjacentMasterFile(vertex))
                 continue;
 
-            for (vertex_it vit2 = vit; vit2 != vitend; ++vit2) {
-                if (graph[*vit].isMasterFile() == graph[*vit2].isMasterFile() || hasAdjacentMasterFile(*vit2))
+            for (const auto& otherVertex : boost::make_iterator_range(boost::vertices(graph))) {
+                if (graph[otherVertex].isMasterFile())
                     continue;
 
-                vertex_t vertex, parentVertex;
-                if (graph[*vit2].isMasterFile()) {
-                    parentVertex = *vit2;
-                    vertex = *vit;
-                }
-                else {
-                    parentVertex = *vit;
-                    vertex = *vit2;
-                }
-
-                addEdge(parentVertex, vertex, Edge::Source::MASTER_FILE);
+                addEdge(vertex, otherVertex, Edge::Source::MASTER_FILE);
             }
         }
     }
