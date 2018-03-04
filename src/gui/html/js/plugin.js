@@ -190,21 +190,6 @@ export default class Plugin {
     this.cardZIndex = 0;
   }
 
-  update(plugin) {
-    if (!plugin) {
-      return;
-    }
-    if (plugin.name !== this.name) {
-      throw new Error(
-        `Cannot update data for ${this.name} using data for ${plugin.name}`
-      );
-    }
-
-    Object.getOwnPropertyNames(plugin).forEach(property => {
-      this[property] = plugin[property];
-    });
-  }
-
   static fromJson(key, value) {
     if (
       value !== null &&
@@ -251,6 +236,81 @@ export default class Plugin {
     }
 
     return rowData;
+  }
+
+  static onMessageChange(evt) {
+    document.getElementById('filterTotalMessageNo').textContent =
+      parseInt(
+        document.getElementById('filterTotalMessageNo').textContent,
+        10
+      ) + evt.detail.totalDiff;
+    document.getElementById('totalMessageNo').textContent =
+      parseInt(document.getElementById('totalMessageNo').textContent, 10) +
+      evt.detail.totalDiff;
+    document.getElementById('totalWarningNo').textContent =
+      parseInt(document.getElementById('totalWarningNo').textContent, 10) +
+      evt.detail.warningDiff;
+    document.getElementById('totalErrorNo').textContent =
+      parseInt(document.getElementById('totalErrorNo').textContent, 10) +
+      evt.detail.errorDiff;
+  }
+
+  static onCleaningDataChange(evt) {
+    if (evt.detail.isDirty !== undefined) {
+      if (evt.detail.isDirty) {
+        document.getElementById('dirtyPluginNo').textContent =
+          parseInt(document.getElementById('dirtyPluginNo').textContent, 10) +
+          1;
+      } else {
+        document.getElementById('dirtyPluginNo').textContent =
+          parseInt(document.getElementById('dirtyPluginNo').textContent, 10) -
+          1;
+      }
+    }
+    if (evt.detail.cleanedWith !== undefined) {
+      const card = document.getElementById(evt.detail.pluginId);
+      if (card) {
+        card.updateIsCleanIcon();
+      }
+    }
+  }
+
+  static onContentChange(evt) {
+    const card = document.getElementById(evt.detail.pluginId);
+    if (card) {
+      card.updateContent(evt.detail.mayChangeCardHeight);
+    }
+  }
+
+  static onCardStylingChange(evt) {
+    const card = document.getElementById(evt.detail.pluginId);
+    if (card) {
+      card.updateStyling();
+    }
+  }
+
+  static onItemContentChange(evt) {
+    const item = document
+      .getElementById('cardsNav')
+      .querySelector(`[data-id="${evt.detail.pluginId}"]`);
+    if (item) {
+      item.updateContent(evt.detail);
+    }
+  }
+
+  update(plugin) {
+    if (!plugin) {
+      return;
+    }
+    if (plugin.name !== this.name) {
+      throw new Error(
+        `Cannot update data for ${this.name} using data for ${plugin.name}`
+      );
+    }
+
+    Object.getOwnPropertyNames(plugin).forEach(property => {
+      this[property] = plugin[property];
+    });
   }
 
   _dispatchCardContentChangeEvent(mayChangeCardHeight) {
@@ -484,65 +544,5 @@ export default class Plugin {
 
   getCardContent(filters) {
     return new PluginCardContent(this, filters);
-  }
-
-  static onMessageChange(evt) {
-    document.getElementById('filterTotalMessageNo').textContent =
-      parseInt(
-        document.getElementById('filterTotalMessageNo').textContent,
-        10
-      ) + evt.detail.totalDiff;
-    document.getElementById('totalMessageNo').textContent =
-      parseInt(document.getElementById('totalMessageNo').textContent, 10) +
-      evt.detail.totalDiff;
-    document.getElementById('totalWarningNo').textContent =
-      parseInt(document.getElementById('totalWarningNo').textContent, 10) +
-      evt.detail.warningDiff;
-    document.getElementById('totalErrorNo').textContent =
-      parseInt(document.getElementById('totalErrorNo').textContent, 10) +
-      evt.detail.errorDiff;
-  }
-
-  static onCleaningDataChange(evt) {
-    if (evt.detail.isDirty !== undefined) {
-      if (evt.detail.isDirty) {
-        document.getElementById('dirtyPluginNo').textContent =
-          parseInt(document.getElementById('dirtyPluginNo').textContent, 10) +
-          1;
-      } else {
-        document.getElementById('dirtyPluginNo').textContent =
-          parseInt(document.getElementById('dirtyPluginNo').textContent, 10) -
-          1;
-      }
-    }
-    if (evt.detail.cleanedWith !== undefined) {
-      const card = document.getElementById(evt.detail.pluginId);
-      if (card) {
-        card.updateIsCleanIcon();
-      }
-    }
-  }
-
-  static onContentChange(evt) {
-    const card = document.getElementById(evt.detail.pluginId);
-    if (card) {
-      card.updateContent(evt.detail.mayChangeCardHeight);
-    }
-  }
-
-  static onCardStylingChange(evt) {
-    const card = document.getElementById(evt.detail.pluginId);
-    if (card) {
-      card.updateStyling();
-    }
-  }
-
-  static onItemContentChange(evt) {
-    const item = document
-      .getElementById('cardsNav')
-      .querySelector(`[data-id="${evt.detail.pluginId}"]`);
-    if (item) {
-      item.updateContent(evt.detail);
-    }
   }
 }

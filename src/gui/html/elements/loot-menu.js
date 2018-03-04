@@ -17,6 +17,10 @@ export default class LootMenu extends Polymer.Element {
       </paper-listbox>`;
   }
 
+  static onSelect(evt) {
+    evt.currentTarget.select(evt.currentTarget.indexOf(evt.detail.item));
+  }
+
   connectedCallback() {
     super.connectedCallback();
 
@@ -27,10 +31,6 @@ export default class LootMenu extends Polymer.Element {
     super.disconnectedCallback();
 
     this.$.menu.removeEventListener('iron-select', LootMenu.onSelect);
-  }
-
-  static onSelect(evt) {
-    evt.currentTarget.select(evt.currentTarget.indexOf(evt.detail.item));
   }
 }
 

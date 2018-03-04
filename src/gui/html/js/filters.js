@@ -20,6 +20,27 @@ export default class Filters {
     this._doNotCleanString = l10n.translate('Do not clean').toLowerCase();
   }
 
+  static fillConflictsFilterList(plugins) {
+    const list = document.getElementById('conflictsFilter');
+
+    /* Remove any existing plugin items. */
+    while (list.children.length > 1) {
+      list.removeChild(list.lastElementChild);
+    }
+
+    plugins.forEach(plugin => {
+      const item = document.createElement('paper-item');
+      item.setAttribute('value', plugin.name);
+      item.textContent = plugin.name;
+
+      list.appendChild(item);
+    });
+  }
+
+  static onDeactivateConflictsFilter() {
+    document.getElementById('conflictsFilter').value = '';
+  }
+
   pluginFilter(plugin) {
     if (this.hideInactivePlugins && !plugin.isActive) {
       return false;
@@ -153,26 +174,5 @@ export default class Filters {
         currentValue.getCardContent(this).messages.length,
       0
     );
-  }
-
-  static fillConflictsFilterList(plugins) {
-    const list = document.getElementById('conflictsFilter');
-
-    /* Remove any existing plugin items. */
-    while (list.children.length > 1) {
-      list.removeChild(list.lastElementChild);
-    }
-
-    plugins.forEach(plugin => {
-      const item = document.createElement('paper-item');
-      item.setAttribute('value', plugin.name);
-      item.textContent = plugin.name;
-
-      list.appendChild(item);
-    });
-  }
-
-  static onDeactivateConflictsFilter() {
-    document.getElementById('conflictsFilter').value = '';
   }
 }

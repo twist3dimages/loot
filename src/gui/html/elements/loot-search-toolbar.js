@@ -67,6 +67,52 @@ export default class LootSearchToolbar extends Polymer.Element {
       </app-toolbar>`;
   }
 
+  static _onEnter(evt) {
+    const host = evt.target.parentElement.parentNode.host;
+    if (evt.keyCode !== 13 || host.results.length === 0) {
+      return;
+    }
+    if (host._currentResult === host.results.length - 1) {
+      host._currentResult = 0;
+    } else {
+      host._currentResult += 1;
+    }
+  }
+
+  static _onSearch(evt) {
+    evt.target.parentElement.parentNode.host._resetResults();
+
+    const needle = evt.target.value ? evt.target.value.toLowerCase() : '';
+    evt.target.dispatchEvent(
+      new CustomEvent('loot-search-begin', {
+        detail: { needle },
+        bubbles: true,
+        composed: true
+      })
+    );
+  }
+
+  static _onPrev(evt) {
+    evt.target.parentElement.parentNode.host._currentResult -= 1;
+  }
+
+  static _onNext(evt) {
+    evt.target.parentElement.parentNode.host._currentResult += 1;
+  }
+
+  static _onClose(evt) {
+    const host = evt.target.parentElement.parentNode.host;
+    host._resetResults();
+    host.$.search.value = '';
+    host.$.count.classList.toggle('hidden', true);
+    evt.target.dispatchEvent(
+      new CustomEvent('loot-search-end', {
+        bubbles: true,
+        composed: true
+      })
+    );
+  }
+
   _currentResultChanged(newValue) {
     if (this.results && this.results.length > 0) {
       if (this.results.length === 1) {
@@ -119,18 +165,6 @@ export default class LootSearchToolbar extends Polymer.Element {
     this.$.close.removeEventListener('change', LootSearchToolbar._onClose);
   }
 
-  static _onEnter(evt) {
-    const host = evt.target.parentElement.parentNode.host;
-    if (evt.keyCode !== 13 || host.results.length === 0) {
-      return;
-    }
-    if (host._currentResult === host.results.length - 1) {
-      host._currentResult = 0;
-    } else {
-      host._currentResult += 1;
-    }
-  }
-
   focusInput() {
     this.$.search.focus();
   }
@@ -144,40 +178,6 @@ export default class LootSearchToolbar extends Polymer.Element {
 
   search() {
     this.$.search.dispatchEvent(new Event('input'));
-  }
-
-  static _onSearch(evt) {
-    evt.target.parentElement.parentNode.host._resetResults();
-
-    const needle = evt.target.value ? evt.target.value.toLowerCase() : '';
-    evt.target.dispatchEvent(
-      new CustomEvent('loot-search-begin', {
-        detail: { needle },
-        bubbles: true,
-        composed: true
-      })
-    );
-  }
-
-  static _onPrev(evt) {
-    evt.target.parentElement.parentNode.host._currentResult -= 1;
-  }
-
-  static _onNext(evt) {
-    evt.target.parentElement.parentNode.host._currentResult += 1;
-  }
-
-  static _onClose(evt) {
-    const host = evt.target.parentElement.parentNode.host;
-    host._resetResults();
-    host.$.search.value = '';
-    host.$.count.classList.toggle('hidden', true);
-    evt.target.dispatchEvent(
-      new CustomEvent('loot-search-end', {
-        bubbles: true,
-        composed: true
-      })
-    );
   }
 
   /* eslint-disable class-methods-use-this */

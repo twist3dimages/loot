@@ -34,6 +34,26 @@ export default class EditableTable extends Polymer.Element {
       <slot></slot>`;
   }
 
+  static onDrop(evt) {
+    evt.stopPropagation();
+
+    if (
+      evt.currentTarget.tagName === 'EDITABLE-TABLE' &&
+      evt.currentTarget.getAttribute('data-template') === 'fileRow'
+    ) {
+      evt.currentTarget.addRow({
+        name: evt.dataTransfer.getData('text/plain')
+      });
+    }
+
+    return false;
+  }
+
+  static onDragOver(evt) {
+    evt.preventDefault();
+    evt.dataTransfer.dropEffect = 'copy';
+  }
+
   connectedCallback() {
     super.connectedCallback();
 
@@ -76,26 +96,6 @@ export default class EditableTable extends Polymer.Element {
     /* Remove drag 'n' drop listeners. */
     this.removeEventListener('drop', EditableTable.onDrop);
     this.removeEventListener('dragover', EditableTable.onDragOver);
-  }
-
-  static onDrop(evt) {
-    evt.stopPropagation();
-
-    if (
-      evt.currentTarget.tagName === 'EDITABLE-TABLE' &&
-      evt.currentTarget.getAttribute('data-template') === 'fileRow'
-    ) {
-      evt.currentTarget.addRow({
-        name: evt.dataTransfer.getData('text/plain')
-      });
-    }
-
-    return false;
-  }
-
-  static onDragOver(evt) {
-    evt.preventDefault();
-    evt.dataTransfer.dropEffect = 'copy';
   }
 
   getRowsData(writableOnly) {

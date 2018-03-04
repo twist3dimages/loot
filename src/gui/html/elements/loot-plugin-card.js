@@ -150,6 +150,24 @@ export default class LootPluginCard extends Polymer.Element {
 </paper-material>`;
   }
 
+  static _onCopyMetadata(evt) {
+    evt.target.dispatchEvent(
+      new CustomEvent('loot-copy-metadata', {
+        bubbles: true,
+        composed: true
+      })
+    );
+  }
+
+  static _onClearMetadata(evt) {
+    evt.target.dispatchEvent(
+      new CustomEvent('loot-clear-metadata', {
+        bubbles: true,
+        composed: true
+      })
+    );
+  }
+
   connectedCallback() {
     super.connectedCallback();
     this.$.editMetadata.addEventListener('click', this.onShowEditor);
@@ -282,24 +300,6 @@ export default class LootPluginCard extends Polymer.Element {
     /* Fire an open event, so that the UI can enter edit mode. */
     this.dispatchEvent(
       new CustomEvent('loot-editor-open', {
-        bubbles: true,
-        composed: true
-      })
-    );
-  }
-
-  static _onCopyMetadata(evt) {
-    evt.target.dispatchEvent(
-      new CustomEvent('loot-copy-metadata', {
-        bubbles: true,
-        composed: true
-      })
-    );
-  }
-
-  static _onClearMetadata(evt) {
-    evt.target.dispatchEvent(
-      new CustomEvent('loot-clear-metadata', {
         bubbles: true,
         composed: true
       })

@@ -269,56 +269,7 @@ export default class LootPluginEditor extends Polymer.Element {
       </iron-pages>`;
   }
 
-  connectedCallback() {
-    super.connectedCallback();
-    this.$.accept.addEventListener('click', LootPluginEditor._onHideEditor);
-    this.$.cancel.addEventListener('click', LootPluginEditor._onHideEditor);
-    this.$.splitter.addEventListener(
-      'mousedown',
-      LootPluginEditor._stopPropagation
-    );
-    Polymer.Gestures.addListener(
-      this.$.splitter,
-      'track',
-      this._onSplitterDrag
-    );
-  }
-
-  disconnectedCallback() {
-    super.disconnectedCallback();
-    this.$.accept.removeEventListener('click', LootPluginEditor._onHideEditor);
-    this.$.cancel.removeEventListener('click', LootPluginEditor._onHideEditor);
-    this.$.splitter.removeEventListener(
-      'mousedown',
-      LootPluginEditor._stopPropagation
-    );
-    Polymer.Gestures.removeListener(
-      this.$.splitter,
-      'track',
-      this._onSplitterDrag
-    );
-  }
-
   static _stopPropagation(evt) {
-    evt.preventDefault();
-    evt.stopPropagation();
-  }
-
-  _onSplitterDrag(evt) {
-    if (evt.detail.state === 'start') {
-      this.parentNode.host.classList.toggle('resizing', true);
-      this.parentNode.host.style.height = `${parseInt(
-        window.getComputedStyle(this.parentNode.host).height,
-        10
-      )}px`;
-    } else if (evt.detail.state === 'end') {
-      this.parentNode.host.classList.toggle('resizing', false);
-    }
-    window.getSelection().removeAllRanges();
-    this.parentNode.host.style.height = `${parseInt(
-      this.parentNode.host.style.height,
-      10
-    ) - evt.detail.ddy}px`;
     evt.preventDefault();
     evt.stopPropagation();
   }
@@ -331,46 +282,6 @@ export default class LootPluginEditor extends Polymer.Element {
       nav: rowData.nav,
       util: rowData.utility
     };
-  }
-
-  readFromEditor() {
-    /* Need to turn all the editor controls' values into data to
-        process. Determining whether or not priority values have changed
-        is left to the C++ side of things, and masterlist rows in
-        the tables can be ignored because they're immutable. */
-
-    const metadata = {
-      name: this.querySelector('h1').textContent,
-      enabled: this.$.enableEdits.checked,
-      priority: parseInt(this.$.priorityValue.value, 10),
-      global_priority: parseInt(this.$.globalPriorityValue.value, 10)
-    };
-
-    const tables = this.shadowRoot.querySelectorAll('editable-table');
-    for (let j = 0; j < tables.length; j += 1) {
-      const rowsData = tables[j].getRowsData(true);
-      if (rowsData.length > 0) {
-        if (tables[j].parentElement.id === 'after') {
-          metadata.after = rowsData;
-        } else if (tables[j].parentElement.id === 'req') {
-          metadata.req = rowsData;
-        } else if (tables[j].parentElement.id === 'inc') {
-          metadata.inc = rowsData;
-        } else if (tables[j].parentElement.id === 'message') {
-          metadata.msg = rowsData;
-        } else if (tables[j].parentElement.id === 'tags') {
-          metadata.tag = rowsData.map(Plugin.tagFromRowData);
-        } else if (tables[j].parentElement.id === 'dirty') {
-          metadata.dirty = rowsData.map(LootPluginEditor._rowDataToCrc);
-        } else if (tables[j].parentElement.id === 'clean') {
-          metadata.clean = rowsData.map(LootPluginEditor._rowDataToCrc);
-        } else if (tables[j].parentElement.id === 'url') {
-          metadata.url = rowsData;
-        }
-      }
-    }
-
-    return metadata;
   }
 
   static _onHideEditor(evt) {
@@ -412,6 +323,95 @@ export default class LootPluginEditor extends Polymer.Element {
       nav: dirtyInfo.nav,
       utility: dirtyInfo.util
     };
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+    this.$.accept.addEventListener('click', LootPluginEditor._onHideEditor);
+    this.$.cancel.addEventListener('click', LootPluginEditor._onHideEditor);
+    this.$.splitter.addEventListener(
+      'mousedown',
+      LootPluginEditor._stopPropagation
+    );
+    Polymer.Gestures.addListener(
+      this.$.splitter,
+      'track',
+      this._onSplitterDrag
+    );
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    this.$.accept.removeEventListener('click', LootPluginEditor._onHideEditor);
+    this.$.cancel.removeEventListener('click', LootPluginEditor._onHideEditor);
+    this.$.splitter.removeEventListener(
+      'mousedown',
+      LootPluginEditor._stopPropagation
+    );
+    Polymer.Gestures.removeListener(
+      this.$.splitter,
+      'track',
+      this._onSplitterDrag
+    );
+  }
+
+  _onSplitterDrag(evt) {
+    if (evt.detail.state === 'start') {
+      this.parentNode.host.classList.toggle('resizing', true);
+      this.parentNode.host.style.height = `${parseInt(
+        window.getComputedStyle(this.parentNode.host).height,
+        10
+      )}px`;
+    } else if (evt.detail.state === 'end') {
+      this.parentNode.host.classList.toggle('resizing', false);
+    }
+    window.getSelection().removeAllRanges();
+    this.parentNode.host.style.height = `${parseInt(
+      this.parentNode.host.style.height,
+      10
+    ) - evt.detail.ddy}px`;
+    evt.preventDefault();
+    evt.stopPropagation();
+  }
+
+  readFromEditor() {
+    /* Need to turn all the editor controls' values into data to
+        process. Determining whether or not priority values have changed
+        is left to the C++ side of things, and masterlist rows in
+        the tables can be ignored because they're immutable. */
+
+    const metadata = {
+      name: this.querySelector('h1').textContent,
+      enabled: this.$.enableEdits.checked,
+      priority: parseInt(this.$.priorityValue.value, 10),
+      global_priority: parseInt(this.$.globalPriorityValue.value, 10)
+    };
+
+    const tables = this.shadowRoot.querySelectorAll('editable-table');
+    for (let j = 0; j < tables.length; j += 1) {
+      const rowsData = tables[j].getRowsData(true);
+      if (rowsData.length > 0) {
+        if (tables[j].parentElement.id === 'after') {
+          metadata.after = rowsData;
+        } else if (tables[j].parentElement.id === 'req') {
+          metadata.req = rowsData;
+        } else if (tables[j].parentElement.id === 'inc') {
+          metadata.inc = rowsData;
+        } else if (tables[j].parentElement.id === 'message') {
+          metadata.msg = rowsData;
+        } else if (tables[j].parentElement.id === 'tags') {
+          metadata.tag = rowsData.map(Plugin.tagFromRowData);
+        } else if (tables[j].parentElement.id === 'dirty') {
+          metadata.dirty = rowsData.map(LootPluginEditor._rowDataToCrc);
+        } else if (tables[j].parentElement.id === 'clean') {
+          metadata.clean = rowsData.map(LootPluginEditor._rowDataToCrc);
+        } else if (tables[j].parentElement.id === 'url') {
+          metadata.url = rowsData;
+        }
+      }
+    }
+
+    return metadata;
   }
 
   setEditorData(newData) {

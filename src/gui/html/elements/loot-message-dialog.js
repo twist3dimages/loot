@@ -40,6 +40,17 @@ export default class LootMessageDialog extends Polymer.Element {
       </paper-dialog>`;
   }
 
+  static onClose(evt) {
+    if (evt.target.parentNode.host.closeCallback) {
+      evt.target.parentNode.host.closeCallback(
+        evt.target.closingReason.confirmed
+      );
+    }
+    evt.target.parentNode.host.parentElement.removeChild(
+      evt.target.parentNode.host
+    );
+  }
+
   /* eslint-disable class-methods-use-this */
   _localise(text) {
     return loot.l10n.translate(text);
@@ -52,17 +63,6 @@ export default class LootMessageDialog extends Polymer.Element {
 
   setDismissable(isDialogDismissable) {
     this.shadowRoot.getElementById('dismiss').hidden = !isDialogDismissable;
-  }
-
-  static onClose(evt) {
-    if (evt.target.parentNode.host.closeCallback) {
-      evt.target.parentNode.host.closeCallback(
-        evt.target.closingReason.confirmed
-      );
-    }
-    evt.target.parentNode.host.parentElement.removeChild(
-      evt.target.parentNode.host
-    );
   }
 
   showModal(title, text, closeCallback) {

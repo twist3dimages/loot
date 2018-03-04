@@ -20,6 +20,103 @@ export default class Game {
     this._notApplicableString = l10n.translate('N/A');
   }
 
+  static onPluginsChange(evt) {
+    if (!evt.detail.valuesAreTotals) {
+      evt.detail.totalMessageNo += parseInt(
+        document.getElementById('totalMessageNo').textContent,
+        10
+      );
+      evt.detail.warnMessageNo += parseInt(
+        document.getElementById('totalWarningNo').textContent,
+        10
+      );
+      evt.detail.errorMessageNo += parseInt(
+        document.getElementById('totalErrorNo').textContent,
+        10
+      );
+      evt.detail.totalPluginNo += parseInt(
+        document.getElementById('totalPluginNo').textContent,
+        10
+      );
+      evt.detail.activePluginNo += parseInt(
+        document.getElementById('activePluginNo').textContent,
+        10
+      );
+      evt.detail.dirtyPluginNo += parseInt(
+        document.getElementById('dirtyPluginNo').textContent,
+        10
+      );
+    }
+
+    document.getElementById('filterTotalMessageNo').textContent =
+      evt.detail.totalMessageNo;
+    document.getElementById('totalMessageNo').textContent =
+      evt.detail.totalMessageNo;
+    document.getElementById('totalWarningNo').textContent =
+      evt.detail.warnMessageNo;
+    document.getElementById('totalErrorNo').textContent =
+      evt.detail.errorMessageNo;
+
+    document.getElementById('filterTotalPluginNo').textContent =
+      evt.detail.totalPluginNo;
+    document.getElementById('totalPluginNo').textContent =
+      evt.detail.totalPluginNo;
+    document.getElementById('activePluginNo').textContent =
+      evt.detail.activePluginNo;
+    document.getElementById('dirtyPluginNo').textContent =
+      evt.detail.dirtyPluginNo;
+  }
+
+  static ongeneralMessagesChange(evt) {
+    document.getElementById('filterTotalMessageNo').textContent =
+      parseInt(
+        document.getElementById('filterTotalMessageNo').textContent,
+        10
+      ) + evt.detail.totalDiff;
+    document.getElementById('totalMessageNo').textContent =
+      parseInt(document.getElementById('totalMessageNo').textContent, 10) +
+      evt.detail.totalDiff;
+    document.getElementById('totalWarningNo').textContent =
+      parseInt(document.getElementById('totalWarningNo').textContent, 10) +
+      evt.detail.warningDiff;
+    document.getElementById('totalErrorNo').textContent =
+      parseInt(document.getElementById('totalErrorNo').textContent, 10) +
+      evt.detail.errorDiff;
+
+    /* Remove old messages from UI. */
+    const generalMessagesList = document
+      .getElementById('summary')
+      .getElementsByTagName('ul')[0];
+    while (generalMessagesList.firstElementChild) {
+      generalMessagesList.removeChild(generalMessagesList.firstElementChild);
+    }
+
+    /* Add new messages. */
+    if (evt.detail.messages) {
+      evt.detail.messages.forEach(message => {
+        const li = document.createElement('li');
+        li.className = message.type;
+        /* Use the Marked library for Markdown formatting support. */
+        li.innerHTML = marked(message.text);
+        generalMessagesList.appendChild(li);
+      });
+    }
+
+    /* Update the plugin card list's configured offset. */
+    const summary = document.getElementById('summary');
+    const summaryStyle = getComputedStyle(summary);
+    document.getElementById('pluginCardList').scrollOffset =
+      summary.offsetHeight +
+      parseInt(summaryStyle.marginTop, 10) +
+      parseInt(summaryStyle.marginBottom, 10);
+  }
+
+  static onMasterlistChange(evt) {
+    document.getElementById('masterlistRevision').textContent =
+      evt.detail.revision;
+    document.getElementById('masterlistDate').textContent = evt.detail.date;
+  }
+
   get folder() {
     return this._folder;
   }
@@ -279,102 +376,5 @@ export default class Game {
 
     /* Re-initialise conflicts filter plugin list. */
     Filters.fillConflictsFilterList(this.plugins);
-  }
-
-  static onPluginsChange(evt) {
-    if (!evt.detail.valuesAreTotals) {
-      evt.detail.totalMessageNo += parseInt(
-        document.getElementById('totalMessageNo').textContent,
-        10
-      );
-      evt.detail.warnMessageNo += parseInt(
-        document.getElementById('totalWarningNo').textContent,
-        10
-      );
-      evt.detail.errorMessageNo += parseInt(
-        document.getElementById('totalErrorNo').textContent,
-        10
-      );
-      evt.detail.totalPluginNo += parseInt(
-        document.getElementById('totalPluginNo').textContent,
-        10
-      );
-      evt.detail.activePluginNo += parseInt(
-        document.getElementById('activePluginNo').textContent,
-        10
-      );
-      evt.detail.dirtyPluginNo += parseInt(
-        document.getElementById('dirtyPluginNo').textContent,
-        10
-      );
-    }
-
-    document.getElementById('filterTotalMessageNo').textContent =
-      evt.detail.totalMessageNo;
-    document.getElementById('totalMessageNo').textContent =
-      evt.detail.totalMessageNo;
-    document.getElementById('totalWarningNo').textContent =
-      evt.detail.warnMessageNo;
-    document.getElementById('totalErrorNo').textContent =
-      evt.detail.errorMessageNo;
-
-    document.getElementById('filterTotalPluginNo').textContent =
-      evt.detail.totalPluginNo;
-    document.getElementById('totalPluginNo').textContent =
-      evt.detail.totalPluginNo;
-    document.getElementById('activePluginNo').textContent =
-      evt.detail.activePluginNo;
-    document.getElementById('dirtyPluginNo').textContent =
-      evt.detail.dirtyPluginNo;
-  }
-
-  static ongeneralMessagesChange(evt) {
-    document.getElementById('filterTotalMessageNo').textContent =
-      parseInt(
-        document.getElementById('filterTotalMessageNo').textContent,
-        10
-      ) + evt.detail.totalDiff;
-    document.getElementById('totalMessageNo').textContent =
-      parseInt(document.getElementById('totalMessageNo').textContent, 10) +
-      evt.detail.totalDiff;
-    document.getElementById('totalWarningNo').textContent =
-      parseInt(document.getElementById('totalWarningNo').textContent, 10) +
-      evt.detail.warningDiff;
-    document.getElementById('totalErrorNo').textContent =
-      parseInt(document.getElementById('totalErrorNo').textContent, 10) +
-      evt.detail.errorDiff;
-
-    /* Remove old messages from UI. */
-    const generalMessagesList = document
-      .getElementById('summary')
-      .getElementsByTagName('ul')[0];
-    while (generalMessagesList.firstElementChild) {
-      generalMessagesList.removeChild(generalMessagesList.firstElementChild);
-    }
-
-    /* Add new messages. */
-    if (evt.detail.messages) {
-      evt.detail.messages.forEach(message => {
-        const li = document.createElement('li');
-        li.className = message.type;
-        /* Use the Marked library for Markdown formatting support. */
-        li.innerHTML = marked(message.text);
-        generalMessagesList.appendChild(li);
-      });
-    }
-
-    /* Update the plugin card list's configured offset. */
-    const summary = document.getElementById('summary');
-    const summaryStyle = getComputedStyle(summary);
-    document.getElementById('pluginCardList').scrollOffset =
-      summary.offsetHeight +
-      parseInt(summaryStyle.marginTop, 10) +
-      parseInt(summaryStyle.marginBottom, 10);
-  }
-
-  static onMasterlistChange(evt) {
-    document.getElementById('masterlistRevision').textContent =
-      evt.detail.revision;
-    document.getElementById('masterlistDate').textContent = evt.detail.date;
   }
 }
