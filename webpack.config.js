@@ -56,6 +56,11 @@ module.exports = {
         test: /\.js$/,
         exclude: /node_modules/,
         use: ['source-map-loader']
+      },
+      {
+        test: /\.ts$/,
+        exclude: /node_modules/,
+        use: ['source-map-loader', 'awesome-typescript-loader']
       }
     ]
   },
