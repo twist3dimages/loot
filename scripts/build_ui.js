@@ -1,5 +1,7 @@
 /* eslint-disable no-console */
 
+'use strict';
+
 const helpers = require('./helpers');
 const { Analyzer, FSUrlLoader } = require('polymer-analyzer');
 const fs = require('fs-extra');

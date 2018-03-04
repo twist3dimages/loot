@@ -1,6 +1,8 @@
 /* Convert .po files to .mo files. */
 /* eslint-disable no-console */
 
+'use strict';
+
 const fs = require('fs');
 const path = require('path');
 const helpers = require('./helpers');

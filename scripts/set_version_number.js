@@ -1,6 +1,8 @@
 #! /usr/bin/env node
 /* eslint-disable no-console */
 
+'use strict';
+
 const path = require('path');
 const replace = require('replace');
 

@@ -1,3 +1,5 @@
+'use strict';
+
 const helpers = require('./helpers');
 const fs = require('fs-extra');
 const path = require('path');
