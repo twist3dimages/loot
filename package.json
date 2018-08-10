@@ -82,7 +82,11 @@
   },
   "babel": {
     "presets": [
-      "env"
+      ["env", {
+        "targets": {
+          "chrome": 64
+        }
+      }]
     ]
   },
   "eslintConfig": {
