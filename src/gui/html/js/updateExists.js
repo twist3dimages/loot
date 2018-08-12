@@ -49,7 +49,8 @@ export default function updateExists(currentVersion, currentBuild) {
       const comparison = compare(currentVersion, latestReleaseTagName);
       if (comparison === -1) {
         return true;
-      } else if (comparison === 1) {
+      }
+      if (comparison === 1) {
         return false;
       }
 
